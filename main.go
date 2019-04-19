@@ -69,6 +69,7 @@ func main() {
 				spaces = drawGrid(s, defStyle, spaces)
 				player1 = true
 				moves = 0
+				emitStr(s, 1, 1, defStyle, "Player 1's Turn")
 			}
 		case *tcell.EventMouse:
 			mx, my := ev.Position()
