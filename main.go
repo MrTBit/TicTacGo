@@ -42,6 +42,7 @@ func main() {
 
 	player1 := true
 	win := false
+	wonState := false
 	p1Wins := 0
 	p2Wins := 0
 	moves := 0
@@ -68,6 +69,7 @@ func main() {
 			if ev.Rune() == 'R' || ev.Rune() == 'r' {
 				spaces = drawGrid(s, defStyle, spaces)
 				player1 = true
+				wonState = false
 				moves = 0
 				emitStr(s, 1, 1, defStyle, "Player 1's Turn")
 			}
@@ -97,14 +99,18 @@ func main() {
 					} else {
 						w, h := s.Size()
 
-						if player1 {
-							p1Wins++
-							emitStr(s, 1, 3, defStyle, "P1 Wins: "+strconv.Itoa(p1Wins))
-							emitStr(s, (w/2)-9, h/2, tcell.StyleDefault.Background(tcell.ColorDarkBlue).Foreground(tcell.ColorBlack), "Player 1 Wins!")
-						} else {
-							p2Wins++
-							emitStr(s, 1, 5, defStyle, "P2 Wins: "+strconv.Itoa(p2Wins))
-							emitStr(s, (w/2)-9, h/2, tcell.StyleDefault.Background(tcell.ColorRed).Foreground(tcell.ColorBlack), "Player 2 Wins!")
+						if !wonState {
+							if player1 {
+								p1Wins++
+								emitStr(s, 1, 3, defStyle, "P1 Wins: "+strconv.Itoa(p1Wins))
+								emitStr(s, (w/2)-9, h/2, tcell.StyleDefault.Background(tcell.ColorDarkBlue).Foreground(tcell.ColorBlack), "Player 1 Wins!")
+								wonState = true
+							} else {
+								p2Wins++
+								emitStr(s, 1, 5, defStyle, "P2 Wins: "+strconv.Itoa(p2Wins))
+								emitStr(s, (w/2)-9, h/2, tcell.StyleDefault.Background(tcell.ColorRed).Foreground(tcell.ColorBlack), "Player 2 Wins!")
+								wonState = true
+							}
 						}
 					}
 				}
