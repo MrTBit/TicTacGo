@@ -30,16 +30,19 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
 		os.Exit(1)
 	}
+
 	defStyle := tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite)
 	s.SetStyle(defStyle)
 	s.EnableMouse()
 	s.Clear()
 
+	//holds space information
 	spaces := make([]Position, 9)
 	spaces = drawGrid(s, defStyle, spaces)
 
 	s.Show()
 
+	//default init variables
 	player1 := true
 	win := false
 	wonState := false
@@ -47,14 +50,9 @@ func main() {
 	p2Wins := 0
 	moves := 0
 
-	_, h := s.Size()
 	emitStr(s, 1, 1, defStyle, "Player 1's Turn")
 
-	emitStr(s, 1, 3, defStyle, "P1 Wins: "+strconv.Itoa(p1Wins))
-	emitStr(s, 1, 5, defStyle, "P2 Wins: "+strconv.Itoa(p2Wins))
-
-	emitStr(s, 1, h-2, defStyle, "R to reset")
-	emitStr(s, 1, h-1, defStyle, "ESC to exit")
+	drawStats(s, defStyle, p1Wins, p2Wins)
 
 	for {
 		ev := s.PollEvent()
@@ -67,6 +65,8 @@ func main() {
 			}
 
 			if ev.Rune() == 'R' || ev.Rune() == 'r' {
+				s.Clear()
+				drawStats(s, defStyle, p1Wins, p2Wins)
 				spaces = drawGrid(s, defStyle, spaces)
 				player1 = true
 				wonState = false
@@ -74,6 +74,7 @@ func main() {
 				emitStr(s, 1, 1, defStyle, "Player 1's Turn")
 			}
 		case *tcell.EventMouse:
+			//mouse position
 			mx, my := ev.Position()
 
 			if ev.Buttons() == tcell.Button1 {
@@ -83,6 +84,7 @@ func main() {
 					moves++
 
 					if !win {
+
 						if player1 {
 							player1 = false
 							emitStr(s, 1, 1, defStyle, "Player 2's Turn")
@@ -90,9 +92,9 @@ func main() {
 							player1 = true
 							emitStr(s, 1, 1, defStyle, "Player 1's Turn")
 						}
+
 						w, h := s.Size()
 						if moves == 9 {
-							moves = 0
 							emitStr(s, (w/2)-3, h/2, tcell.StyleDefault.Background(tcell.ColorGreen).Foreground(tcell.ColorBlack), "Draw!")
 						}
 
@@ -116,6 +118,7 @@ func main() {
 				}
 			}
 		}
+		//render
 		s.Show()
 	}
 
@@ -191,9 +194,10 @@ func move(s tcell.Screen, spaces []Position, clickedSpace int, player1 bool) (wi
 	for col := spaces[clickedSpace].x; col <= spaces[clickedSpace].x+spaces[clickedSpace].side; col++ {
 		for row := spaces[clickedSpace].y; row <= spaces[clickedSpace].y+spaces[clickedSpace].side; row++ {
 			if spaces[clickedSpace].played == 1 {
+				//draw a box around the clicked area
 				if (col == spaces[clickedSpace].x || col == spaces[clickedSpace].x+spaces[clickedSpace].side) && (row == spaces[clickedSpace].y || row == spaces[clickedSpace].y+spaces[clickedSpace].side) { //corners
 					s.SetContent(col, row, tcell.RunePlus, nil, style)
-				} else if col == spaces[clickedSpace].x || col == spaces[clickedSpace].x+spaces[clickedSpace].side {
+				} else if col == spaces[clickedSpace].x || col == spaces[clickedSpace].x+spaces[clickedSpace].side { //first or last column, draws vertical line unless a corner already exists (RunePlus)
 					r, _, _, _ := s.GetContent(col, row)
 
 					if r == tcell.RunePlus {
@@ -201,7 +205,7 @@ func move(s tcell.Screen, spaces []Position, clickedSpace int, player1 bool) (wi
 					} else {
 						s.SetContent(col, row, tcell.RuneVLine, nil, style)
 					}
-				} else if row == spaces[clickedSpace].y || row == spaces[clickedSpace].y+spaces[clickedSpace].side {
+				} else if row == spaces[clickedSpace].y || row == spaces[clickedSpace].y+spaces[clickedSpace].side { //first or last row, draw horizontal line unless corner already exists (RunePlus)
 					r, _, _, _ := s.GetContent(col, row)
 
 					if r == tcell.RunePlus {
@@ -220,6 +224,9 @@ func move(s tcell.Screen, spaces []Position, clickedSpace int, player1 bool) (wi
 }
 
 func checkWin(spaces []Position) (win bool) {
+
+	//for vertical and horizontal wins, adds row or column and if
+	//either equals 3 or 12, there is a win
 
 	//test vertical wins
 	for col := 0; col < 3; col++ {
@@ -257,6 +264,8 @@ func checkWin(spaces []Position) (win bool) {
 	return false
 }
 
+//simply checks if mouse x,y is within a playable square's x,y
+//returns which square is clicked
 func checkValidClick(spaces []Position, x, y int) (clickedSpace int) {
 
 	for i, space := range spaces {
@@ -269,6 +278,17 @@ func checkValidClick(spaces []Position, x, y int) (clickedSpace int) {
 	return -1
 }
 
+func drawStats(s tcell.Screen, style tcell.Style, p1Wins, p2Wins int) {
+	_, h := s.Size()
+
+	emitStr(s, 1, 3, style, "P1 Wins: "+strconv.Itoa(p1Wins))
+	emitStr(s, 1, 5, style, "P2 Wins: "+strconv.Itoa(p2Wins))
+
+	emitStr(s, 1, h-2, style, "R to reset")
+	emitStr(s, 1, h-1, style, "ESC to exit")
+}
+
+//draws a string at x,y
 func emitStr(s tcell.Screen, x, y int, style tcell.Style, str string) {
 	for _, c := range str {
 		var comb []rune
